@@ -24,39 +24,44 @@ end
 require "logstash/filters/grok"
 require "logstash/filters/rfc2047"
 
-describe "LogStash::Filters::Mime" do
-  describe "Encode RFC2047" do
+describe "LogStash::Filters::RFC2047" do
+  describe "Encode single RFC2047 field" do
 
     let(:config) do <<-CONFIG
       filter {
         grok {
-          match => { "message" => "%{TIMESTAMP}: %{DATA}: %{GREEDYDATA:header_field}"}
+          match => { "message" => "%{TIMESTAMP}: %{DATA}: %{DATA:header_field1}: %{GREEDYDATA:header_field2}" }
         }
         rfc2047 {
-          field => "header_field"
+          field => [ "header_field1", "header_field2", "header_field3" ]
         }
       }
       CONFIG
     end
     
-    message = "2013-01-20T13:14:01+0000: Example mail header field: =?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?="
-    
-    describe "Decode valid message" do
+    describe "Decode valid messages" do
+
+      message = "2013-01-20T13:14:01+0000: Example mail header field: =?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?=: =?ISO-8859-2?B?VGhlIHNlY29uZCBtZXNzYWdl=?="
+
       sample ({
                 'message' => message,
                 'type' => 'type'
       }) do
-        insist { subject["header_field"] } == "If you can read this you understand the example."
+        insist { subject["header_field1"] } == "If you can read this you understand the example."
+        insist { subject["header_field2"] } == "The second message"
       end
     end
 
     describe "Invalid message should pass through unchanged" do
-      message = "=?iso-2022-jp?Q?whatever"
+
+      message = "2013-01-20T13:14:01+0000: Example mail header field: =?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?=: =?iso-2022-jp?Q?whatever"
+
       sample ({
                 'message' => message,
                 'type' => 'type'
       }) do
-        insist { subject["message"] } == "=?iso-2022-jp?Q?whatever"
+        insist { subject["header_field1"] } == "If you can read this you understand the example."
+        insist { subject["header_field2"] } == "=?iso-2022-jp?Q?whatever"
       end
     end
 

@@ -7,7 +7,7 @@ class LogStash::Filters::RFC2047 < LogStash::Filters::Base
 
  config_name "rfc2047"
 
- config :field, :validate => :string
+ config :field, :validate => :array
 
   public
   def register
@@ -17,10 +17,10 @@ class LogStash::Filters::RFC2047 < LogStash::Filters::Base
   public
   def filter(event)
 
-    if @field 
-      msg = event[@field]
+    @field.each do |f| 
+      msg = event[f]
       if ((msg =~ /=\?((?:ISO|UTF)-[0-9]{1,4}(?:-[0-9])?)\?/i) && (msg.encoding.to_s=="UTF-8"))
-         event[@field] = Rfc2047.decode(msg.encode("utf-8"), $1)
+         event[f] = Rfc2047.decode(msg.encode("utf-8"), $1)
          # correct debugging log statement for reference
          # using the event.get API
          @logger.debug? && @logger.debug("Message is now: #{event["message"]})")
