@@ -15,12 +15,24 @@ module LogStash::Environment
   end
 
   # also :pattern_path method must exist so we define it too
+
+  # method is called by logstash-filter-grok to create patterns_path array
+  #
+  #   logstash-filter-grok/lib/logstash/filters/grok.rb(line ~230):
+  #
+  #   @@patterns_path += [
+  #     LogStash::Patterns::Core.path,
+  #     LogStash::Environment.pattern_path("*")
+  #
+  # patterns defined in spec/patterns/ will be joined to the array by the grok 
+
   unless self.method_defined?(:pattern_path)
     def pattern_path(path)
       ::File.join(LOGSTASH_HOME, "spec", "patterns", path)
     end
   end
 end
+
 require "logstash/filters/grok"
 require "logstash/filters/rfc2047"
 
