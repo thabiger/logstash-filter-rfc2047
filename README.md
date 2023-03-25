@@ -1,7 +1,5 @@
 # Logstash RFC2407 Plugin
 
-[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-filter-example.svg)](https://travis-ci.org/logstash-plugins/logstash-filter-example)
-
 This plugin is meant for decoding RFC2047 headers
 
 ## Example
@@ -19,7 +17,7 @@ message => "2013-01-20T13:14:01+0000: Example mail header field: =?ISO-8859-1?B?
         grok {
           match => { "message" => "%{TIMESTAMP_ISO8601:timestamp}: %{DATA}: %{DATA:header_field1};( %{GREEDYDATA:header_field2})?"}
         }
-        mime {
+        rfc2047 {
           field => [ "header_field1", "header_field2" ]
         }
       }
